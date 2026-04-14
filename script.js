@@ -266,11 +266,15 @@ function renderCalendarTo() {
   const dropoffDate = new Date(state.parkingFromDate);
   bar.textContent = `Dropping off: ${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
 
+  // minDate is the day AFTER dropoff (prevent same-day returns)
+  const minDate = new Date(state.parkingFromDate);
+  minDate.setDate(minDate.getDate() + 1);
+
   renderCalendar('calendar-to', date => {
     state.parkingToDate = formatDate(date);
     saveState();
     goToStep(6);
-  }, new Date(state.parkingFromDate));
+  }, minDate);
 }
 
 function renderCalendar(containerId, onSelect, minDate = new Date()) {
