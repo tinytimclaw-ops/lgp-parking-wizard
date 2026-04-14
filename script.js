@@ -425,14 +425,16 @@ function renderFlightList(flights, container, onSelect) {
     const arrTime = (f.arrival && f.arrival.time) || '';
     const depIata = (f.departure && f.departure.airport_iata) || '';
     const arrIata = (f.arrival && f.arrival.airport_iata) || '';
+    const depAirport = (f.departure && f.departure.airport) || depIata;
+    const arrAirport = (f.arrival && f.arrival.airport) || arrIata;
     const stops = (f.flight && f.flight.connectingFlights && f.flight.connectingFlights.amount) || 0;
 
     item.innerHTML = `
       <div class="flight-code">${code} <span style="margin-left:auto;">${stops === 0 ? 'Direct' : stops + ' stop' + (stops > 1 ? 's' : '')}</span></div>
       <div class="flight-times">
-        <div class="flight-time">${depTime} <span class="flight-airport">${depIata}</span></div>
+        <div class="flight-time">${depTime} <span class="flight-airport">${depAirport}</span></div>
         <span style="color:#767d7d;">→</span>
-        <div class="flight-time">${arrTime} <span class="flight-airport">${arrIata}</span></div>
+        <div class="flight-time">${arrTime} <span class="flight-airport">${arrAirport}</span></div>
       </div>
     `;
 
@@ -547,8 +549,9 @@ function renderSummary() {
     const f = state.outboundFlight;
     const code = (f.flight && f.flight.code) || '';
     const depTime = (f.departure && f.departure.time) || '';
-    const arrIata = (f.arrival && f.arrival.airport_iata) || '';
-    dropoffFlight.textContent = `✈ ${code} to ${arrIata} at ${depTime}`;
+    const depAirport = (f.departure && f.departure.airport) || (f.departure && f.departure.airport_iata) || '';
+    const arrAirport = (f.arrival && f.arrival.airport) || (f.arrival && f.arrival.airport_iata) || '';
+    dropoffFlight.textContent = `✈ ${code} · ${depAirport} → ${arrAirport} at ${depTime}`;
   } else {
     dropoffFlight.textContent = '';
   }
@@ -561,8 +564,9 @@ function renderSummary() {
     const f = state.returnFlight;
     const code = (f.flight && f.flight.code) || '';
     const arrTime = (f.arrival && f.arrival.time) || '';
-    const depIata = (f.departure && f.departure.airport_iata) || '';
-    pickupFlight.textContent = `✈ ${code} from ${depIata} at ${arrTime}`;
+    const depAirport = (f.departure && f.departure.airport) || (f.departure && f.departure.airport_iata) || '';
+    const arrAirport = (f.arrival && f.arrival.airport) || (f.arrival && f.arrival.airport_iata) || '';
+    pickupFlight.textContent = `✈ ${code} · ${depAirport} → ${arrAirport} at ${arrTime}`;
   } else {
     pickupFlight.textContent = '';
   }
