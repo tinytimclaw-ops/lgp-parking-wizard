@@ -332,7 +332,7 @@ async function setupReturnFlightSearch() {
   try {
     const dateStr = state.parkingToDate;
     const outboundDestination = state.outboundFlight.arrival.airport_iata;
-    const url = `${FLIGHT_API}/searchDayFlights?location=${outboundDestination}&departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
+    const url = `https://www.holidayextras.com/parking-wizard/api/flights?location=${outboundDestination}&date=${dateStr}&destination=${state.airport}`;
 
     const res = await fetch(url);
     const flights = await res.json();
