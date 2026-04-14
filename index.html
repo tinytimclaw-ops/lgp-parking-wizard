@@ -3,80 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Airport Parking - Holiday Extras</title>
+  <meta name="robots" content="noindex, nofollow">
+  <title>Airport Parking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div id="app">
     <!-- Step 1: Airport Selection -->
-    <div class="step" id="step-airport">
-      <h1>Flying from</h1>
+    <div class="wizard-step" data-step="1">
+      <h1 class="wizard-title">Flying from</h1>
 
       <div class="nearest-section" id="nearest-section">
         <div class="section-header">
-          <h2>NEAREST AIRPORTS</h2>
-          <button class="gps-btn" id="gps-btn">
+          <h2 class="section-label">NEAREST AIRPORTS</h2>
+          <button type="button" class="gps-btn" id="gps-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2v20M2 12h20"/>
-              <circle cx="12" cy="12" r="7"/>
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             <span id="gps-text">Use GPS for accuracy</span>
           </button>
         </div>
         <div class="airport-chips" id="nearest-airports">
-          <button class="airport-chip" data-airport="LGW">Gatwick</button>
-          <button class="airport-chip" data-airport="LHR">Heathrow</button>
-          <button class="airport-chip" data-airport="STN">Stansted</button>
-          <button class="airport-chip" data-airport="LCY">London City</button>
+          <button type="button" class="airport-chip" data-airport="LGW">Gatwick</button>
+          <button type="button" class="airport-chip" data-airport="LHR">Heathrow</button>
+          <button type="button" class="airport-chip" data-airport="STN">Stansted</button>
+          <button type="button" class="airport-chip" data-airport="LCY">London City</button>
         </div>
       </div>
 
       <div class="section-header">
-        <h2>ALL AIRPORTS</h2>
+        <h2 class="section-label">ALL AIRPORTS</h2>
       </div>
       <div class="airport-list" id="all-airports">
-        <button class="airport-item" data-airport="LHR">Heathrow</button>
-        <button class="airport-item" data-airport="LGW">Gatwick</button>
-        <button class="airport-item" data-airport="STN">Stansted</button>
-        <button class="airport-item" data-airport="LTN">Luton</button>
-        <button class="airport-item" data-airport="SEN">Southend</button>
-        <button class="airport-item" data-airport="BHX">Birmingham</button>
-        <button class="airport-item" data-airport="MAN">Manchester</button>
-        <button class="airport-item" data-airport="EMA">East Midlands</button>
-        <button class="airport-item" data-airport="BRS">Bristol</button>
-        <button class="airport-item" data-airport="LBA">Leeds Bradford</button>
-        <button class="airport-item" data-airport="NCL">Newcastle</button>
-        <button class="airport-item" data-airport="EDI">Edinburgh</button>
-        <button class="airport-item" data-airport="GLA">Glasgow</button>
-        <button class="airport-item" data-airport="ABZ">Aberdeen</button>
-        <button class="airport-item" data-airport="CWL">Cardiff</button>
+        <button type="button" class="airport-item" data-airport="LHR">Heathrow</button>
+        <button type="button" class="airport-item" data-airport="LGW">Gatwick</button>
+        <button type="button" class="airport-item" data-airport="STN">Stansted</button>
+        <button type="button" class="airport-item" data-airport="LTN">Luton</button>
+        <button type="button" class="airport-item" data-airport="SEN">Southend</button>
+        <button type="button" class="airport-item" data-airport="BHX">Birmingham</button>
+        <button type="button" class="airport-item" data-airport="MAN">Manchester</button>
+        <button type="button" class="airport-item" data-airport="EMA">East Midlands</button>
+        <button type="button" class="airport-item" data-airport="BRS">Bristol</button>
+        <button type="button" class="airport-item" data-airport="LBA">Leeds Bradford</button>
+        <button type="button" class="airport-item" data-airport="NCL">Newcastle</button>
+        <button type="button" class="airport-item" data-airport="EDI">Edinburgh</button>
+        <button type="button" class="airport-item" data-airport="GLA">Glasgow</button>
+        <button type="button" class="airport-item" data-airport="ABZ">Aberdeen</button>
+        <button type="button" class="airport-item" data-airport="CWL">Cardiff</button>
       </div>
     </div>
 
     <!-- Step 2: Parking From Date -->
-    <div class="step hidden" id="step-parking-from">
-      <h1>Parking from</h1>
+    <div class="wizard-step" data-step="2">
+      <h1 class="wizard-title">Parking from</h1>
       <div class="calendar-container" id="calendar-from"></div>
     </div>
 
     <!-- Step 3: Outbound Flight -->
-    <div class="step hidden" id="step-outbound-flight">
+    <div class="wizard-step" data-step="3">
       <div class="step-header">
-        <h1>Your outbound flight</h1>
-        <button class="skip-btn" id="skip-outbound">Skip</button>
+        <h1 class="wizard-title">Your outbound flight</h1>
+        <button type="button" class="skip-btn" id="skip-outbound">Skip</button>
       </div>
-      <p class="subtitle" id="outbound-subtitle"></p>
-      <div class="flight-search">
-        <input type="text" id="flight-search-out" placeholder="Search flights..." class="search-input">
+      <p class="wizard-subtitle" id="outbound-subtitle"></p>
+
+      <div class="flight-loading" id="flight-loading-out" style="display:none;">Loading flights...</div>
+
+      <div class="flight-search" id="flight-search-out" style="display:none;">
+        <input type="text" id="flight-search-input" placeholder="Search flights..." class="hx-search-forms_text-input">
       </div>
+
       <div class="flight-list" id="flight-list-out"></div>
     </div>
 
     <!-- Step 4: Drop-off Time -->
-    <div class="step hidden" id="step-dropoff-time">
-      <h1>Parking from time</h1>
-      <div class="flight-reminder" id="dropoff-reminder"></div>
-      <p class="subtitle">What time will you drop your car off?</p>
+    <div class="wizard-step" data-step="4">
+      <h1 class="wizard-title">Parking from time</h1>
+      <div class="flight-reminder" id="dropoff-reminder" style="display:none;"></div>
+      <p class="wizard-subtitle">What time will you drop your car off?</p>
       <div class="time-grid" id="time-grid-dropoff"></div>
       <div class="info-box">
         <p><strong>Not sure of the exact time?</strong> Don't worry — most car parks allow you to arrive up to 3 hours either side of your booked drop-off time, and some offer grace periods of up to 6 hours. Check your booking confirmation for the specific terms. If you're concerned about delays on your return, consider adding the <strong>Overstay Waiver</strong> at checkout — Holiday Extras will cover late returns for up to 48 hours after your stated collection time.</p>
@@ -84,28 +93,30 @@
     </div>
 
     <!-- Step 5: Return Date -->
-    <div class="step hidden" id="step-parking-to">
-      <h1>Returning to collect car</h1>
+    <div class="wizard-step" data-step="5">
+      <h1 class="wizard-title">Returning to collect car</h1>
       <div class="dropoff-reminder-bar" id="return-reminder-bar"></div>
       <div class="calendar-container" id="calendar-to"></div>
     </div>
 
     <!-- Step 6: Return Flight -->
-    <div class="step hidden" id="step-return-flight">
+    <div class="wizard-step" data-step="6">
       <div class="step-header">
-        <h1>Your return flight</h1>
-        <button class="skip-btn" id="skip-return">Skip</button>
+        <h1 class="wizard-title">Your return flight</h1>
+        <button type="button" class="skip-btn" id="skip-return">Skip</button>
       </div>
-      <p class="subtitle" id="return-subtitle"></p>
-      <div class="flight-dates" id="return-flight-dates"></div>
+      <p class="wizard-subtitle" id="return-subtitle"></p>
+
+      <div class="flight-loading" id="flight-loading-return" style="display:none;">Loading flights...</div>
+
       <div class="flight-list" id="flight-list-return"></div>
     </div>
 
     <!-- Step 7: Collection Time -->
-    <div class="step hidden" id="step-collection-time">
-      <h1>Car collection time</h1>
-      <div class="flight-reminder" id="collection-reminder"></div>
-      <p class="subtitle" id="collection-subtitle"></p>
+    <div class="wizard-step" data-step="7">
+      <h1 class="wizard-title">Car collection time</h1>
+      <div class="flight-reminder" id="collection-reminder" style="display:none;"></div>
+      <p class="wizard-subtitle" id="collection-subtitle"></p>
       <div class="time-grid" id="time-grid-collection"></div>
       <div class="info-box">
         <p><strong>Flights can be unpredictable.</strong> Most car parks allow you to collect your car up to 3 hours either side of your booked time, and some offer grace periods of up to 6 hours — check your booking confirmation for details. Worried about a long delay? The <strong>Overstay Waiver</strong>, available to add on at checkout — Holiday Extras will cover any late returns or delays for up to 48 hours after your stated collection time, giving you complete peace of mind.</p>
@@ -113,8 +124,8 @@
     </div>
 
     <!-- Step 8: Summary -->
-    <div class="step hidden" id="step-summary">
-      <h1>Summary</h1>
+    <div class="wizard-step" data-step="8">
+      <h1 class="wizard-title">Summary</h1>
       <div class="summary-cards">
         <div class="summary-card">
           <div class="summary-label">Airport</div>
@@ -131,7 +142,7 @@
           <div class="summary-flight" id="summary-pickup-flight"></div>
         </div>
       </div>
-      <button class="cta-btn" id="search-btn">Show prices and availability</button>
+      <button type="button" class="hx-search-forms_button" id="search-btn">Show prices and availability</button>
       <div class="info-box">
         <p><strong>Book with confidence.</strong> Choose Flextras at checkout for free cancellation — change your plans without changing your wallet.</p>
       </div>

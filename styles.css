@@ -1,16 +1,19 @@
+/* Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+/* Base styles - LGP brand */
 body {
-  font-family: 'Ubuntu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #FFFFFF;
-  color: #232323;
-  line-height: 1.6;
-  min-height: 100vh;
+  font-family: 'Ubuntu', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #484e52;
+  background: #fff;
   padding: 20px;
+  -webkit-font-smoothing: antialiased;
 }
 
 #app {
@@ -19,46 +22,44 @@ body {
   padding: 40px 20px;
 }
 
-.step {
+/* Wizard steps - hash routing */
+.wizard-step {
+  display: none;
   animation: fadeIn 0.3s ease;
 }
 
-.step.hidden {
-  display: none;
+.wizard-step.active {
+  display: block;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-h1 {
+/* Typography */
+.wizard-title {
   font-size: 32px;
   font-weight: 700;
+  color: #484e52;
   margin-bottom: 24px;
-  color: #232323;
 }
 
-h2 {
+.wizard-subtitle {
+  font-size: 18px;
+  color: #484e52;
+  margin-bottom: 24px;
+}
+
+.section-label {
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  color: #666;
-  margin-bottom: 16px;
+  color: #484e52;
+  text-transform: uppercase;
 }
 
-.subtitle {
-  font-size: 18px;
-  color: #666;
-  margin-bottom: 24px;
-}
-
+/* Step header with skip button */
 .step-header {
   display: flex;
   justify-content: space-between;
@@ -67,20 +68,28 @@ h2 {
 }
 
 .skip-btn {
-  background: none;
-  border: 1px solid #E0E0E0;
-  padding: 8px 20px;
-  border-radius: 24px;
+  background: #fff;
+  border: 1px solid #deddde;
+  padding: 10px 20px;
+  border-radius: 3px;
   font-size: 16px;
+  font-family: 'Ubuntu', sans-serif;
+  color: #0c79a1;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .skip-btn:hover {
-  background: #F5F5F5;
+  background: #f5f5f5;
+  border-color: #afafaf;
 }
 
-/* Airport Selection */
+.skip-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(46,154,193,.2);
+}
+
+/* Airport selection */
 .nearest-section {
   margin-bottom: 40px;
 }
@@ -98,20 +107,26 @@ h2 {
   gap: 8px;
   background: none;
   border: none;
-  color: #FF6600;
+  color: #c74c28;
   font-size: 14px;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 3px;
   transition: all 0.2s;
 }
 
 .gps-btn:hover {
-  background: #FFF5F0;
+  background: #fff5f0;
+}
+
+.gps-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(199,76,40,.2);
 }
 
 .gps-btn svg {
-  stroke: #FF6600;
+  stroke: #c74c28;
 }
 
 .airport-chips {
@@ -122,26 +137,32 @@ h2 {
 }
 
 .airport-chip {
-  background: #FFFFFF;
-  border: 2px solid #E0E0E0;
+  background: #fff;
+  border: 1px solid #8f9ea3;
   padding: 16px 20px;
-  border-radius: 12px;
+  border-radius: 3px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #232323;
+  color: #484e52;
 }
 
 .airport-chip:hover {
-  border-color: #FF6600;
-  background: #FFF5F0;
+  border-color: #c74c28;
+  background: #fff5f0;
+}
+
+.airport-chip:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .airport-chip.clicked {
-  background: #FF6600;
-  border-color: #FF6600;
-  color: #FFFFFF;
+  background: #c74c28;
+  border-color: #c74c28;
+  color: #fff;
   transform: scale(0.98);
 }
 
@@ -149,21 +170,22 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 0;
-  border: 1px solid #E0E0E0;
-  border-radius: 12px;
+  border: 1px solid #8f9ea3;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .airport-item {
-  background: #FFFFFF;
+  background: #fff;
   border: none;
-  border-bottom: 1px solid #E0E0E0;
+  border-bottom: 1px solid #dfe3e5;
   padding: 18px 20px;
   text-align: left;
   font-size: 16px;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #232323;
+  color: #484e52;
 }
 
 .airport-item:last-child {
@@ -171,12 +193,17 @@ h2 {
 }
 
 .airport-item:hover {
-  background: #F9F9F9;
+  background: #f5f5f5;
+}
+
+.airport-item:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .airport-item.clicked {
-  background: #FF6600;
-  color: #FFFFFF;
+  background: #c74c28;
+  color: #fff;
 }
 
 /* Calendar */
@@ -193,7 +220,7 @@ h2 {
 .calendar-month-title {
   font-size: 20px;
   font-weight: 700;
-  color: #542E91;
+  color: #c74c28;
   margin-bottom: 16px;
   text-align: center;
 }
@@ -208,7 +235,7 @@ h2 {
 .calendar-day-header {
   font-size: 12px;
   font-weight: 700;
-  color: #666;
+  color: #484e52;
   text-align: center;
   padding: 8px 4px;
 }
@@ -218,13 +245,14 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #E0E0E0;
-  border-radius: 8px;
+  border: 1px solid #8f9ea3;
+  border-radius: 3px;
   font-size: 16px;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
-  background: #FFFFFF;
+  background: #fff;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #232323;
+  color: #484e52;
 }
 
 .calendar-day.empty {
@@ -233,14 +261,15 @@ h2 {
 }
 
 .calendar-day.past {
-  color: #CCC;
+  color: #ccc;
   cursor: not-allowed;
-  border-color: #F0F0F0;
+  border-color: #f0f0f0;
+  background: #f5f5f5;
 }
 
 .calendar-day.today {
-  border-color: #7ED321;
-  background: #F0FFF0;
+  border-color: #c74c28;
+  background: #fff5f0;
 }
 
 .calendar-day.start-date {
@@ -249,68 +278,71 @@ h2 {
 }
 
 .calendar-day:not(.past):not(.empty):hover {
-  border-color: #542E91;
-  background: #F5F0FA;
+  border-color: #c74c28;
+  background: #fff5f0;
+}
+
+.calendar-day:not(.past):not(.empty):focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .calendar-day.clicked {
-  background: #542E91;
-  border-color: #542E91;
-  color: #FFFFFF;
+  background: #c74c28;
+  border-color: #c74c28;
+  color: #fff;
   transform: scale(0.95);
 }
 
-/* Flight Search */
-.search-input {
+/* Flight search and list */
+.flight-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: #484e52;
+  font-size: 16px;
+}
+
+.flight-search {
+  margin-bottom: 20px;
+}
+
+.hx-search-forms_text-input {
   width: 100%;
-  padding: 16px 20px;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border: 1px solid #deddde;
+  border-radius: 4px;
   font-size: 16px;
-  margin-bottom: 20px;
+  font-family: 'Ubuntu', sans-serif;
+  color: #484e52;
   transition: all 0.2s;
 }
 
-.search-input:focus {
+.hx-search-forms_text-input::placeholder {
+  color: #aaa;
+}
+
+.hx-search-forms_text-input:hover {
+  border-color: #afafaf;
+}
+
+.hx-search-forms_text-input:focus {
   outline: none;
-  border-color: #FF6600;
-}
-
-.flight-dates {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.flight-date-btn {
-  flex: 1;
-  padding: 14px 20px;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
-  background: #FFFFFF;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.flight-date-btn.active {
-  border-color: #542E91;
-  background: #F5F0FA;
-  font-weight: 600;
+  border-color: #afafaf;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .flight-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 400px;
+  max-height: 500px;
   overflow-y: auto;
 }
 
 .flight-item {
-  background: #FFFFFF;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #8f9ea3;
+  border-radius: 3px;
   padding: 16px 20px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -318,26 +350,31 @@ h2 {
 }
 
 .flight-item:hover {
-  border-color: #542E91;
-  background: #F9F9FF;
+  border-color: #c74c28;
+  background: #fff5f0;
+}
+
+.flight-item:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .flight-item.clicked {
-  background: #542E91;
-  border-color: #542E91;
-  color: #FFFFFF;
+  background: #c74c28;
+  border-color: #c74c28;
+  color: #fff;
 }
 
-.flight-number {
+.flight-code {
   font-size: 12px;
-  color: #666;
+  color: #767d7d;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.flight-item.clicked .flight-number {
+.flight-item.clicked .flight-code {
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -355,15 +392,10 @@ h2 {
   gap: 8px;
 }
 
-.flight-icon {
-  width: 24px;
-  height: 24px;
-}
-
 .flight-airport {
   font-size: 14px;
   font-weight: 400;
-  color: #666;
+  color: #767d7d;
   margin-left: 4px;
 }
 
@@ -371,7 +403,7 @@ h2 {
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* Time Grid */
+/* Time grid */
 .time-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -381,69 +413,64 @@ h2 {
 
 .time-btn {
   padding: 16px 20px;
-  border: 2px solid #E0E0E0;
-  border-radius: 12px;
-  background: #FFFFFF;
+  border: 1px solid #8f9ea3;
+  border-radius: 3px;
+  background: #fff;
   font-size: 16px;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  color: #232323;
+  color: #484e52;
 }
 
 .time-btn:hover {
-  border-color: #542E91;
-  background: #F5F0FA;
+  border-color: #c74c28;
+  background: #fff5f0;
+}
+
+.time-btn:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 4px rgba(46,154,193,.2);
 }
 
 .time-btn.preselected {
-  border-color: #542E91;
-  background: #542E91;
-  color: #FFFFFF;
+  border-color: #c74c28;
+  background: #c74c28;
+  color: #fff;
   font-weight: 600;
 }
 
 .time-btn.clicked {
-  background: #542E91;
-  border-color: #542E91;
-  color: #FFFFFF;
+  background: #c74c28;
+  border-color: #c74c28;
+  color: #fff;
   transform: scale(0.98);
 }
 
-/* Flight Reminder */
+/* Flight reminder */
 .flight-reminder {
   background: #E8F5E9;
   border: 1px solid #7ED321;
-  border-radius: 12px;
+  border-radius: 3px;
   padding: 16px 20px;
   margin-bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.flight-reminder svg {
-  flex-shrink: 0;
-  stroke: #4CAF50;
-}
-
-.flight-reminder-text {
   font-size: 14px;
-  color: #232323;
+  color: #484e52;
 }
 
 .dropoff-reminder-bar {
-  background: #F5F5F5;
-  border-radius: 12px;
+  background: #f5f5f5;
+  border-radius: 3px;
   padding: 16px 20px;
   margin-bottom: 24px;
   font-size: 14px;
-  color: #666;
+  color: #484e52;
 }
 
-/* Info Box */
+/* Info box */
 .info-box {
-  background: #F9F9F9;
-  border-radius: 12px;
+  background: #f5f5f5;
+  border-radius: 3px;
   padding: 20px;
   margin-top: 24px;
 }
@@ -451,7 +478,7 @@ h2 {
 .info-box p {
   font-size: 15px;
   line-height: 1.6;
-  color: #666;
+  color: #484e52;
 }
 
 /* Summary */
@@ -463,15 +490,15 @@ h2 {
 }
 
 .summary-card {
-  background: #F9F9F9;
-  border-radius: 12px;
+  background: #f5f5f5;
+  border-radius: 3px;
   padding: 20px;
 }
 
 .summary-label {
   font-size: 12px;
   font-weight: 700;
-  color: #666;
+  color: #767d7d;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -480,45 +507,48 @@ h2 {
 .summary-value {
   font-size: 20px;
   font-weight: 700;
-  color: #232323;
+  color: #484e52;
   margin-bottom: 4px;
 }
 
 .summary-flight {
   font-size: 14px;
-  color: #666;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #767d7d;
   margin-top: 8px;
 }
 
-.cta-btn {
+/* LGP CTA button */
+.hx-search-forms_button {
   width: 100%;
-  background: #FF6600;
-  color: #FFFFFF;
-  border: none;
-  padding: 20px 32px;
-  border-radius: 12px;
-  font-size: 18px;
+  height: 46px;
+  background: #c74c28;
+  color: #fff;
+  border: 1px solid #c74c28;
+  border-radius: 3px;
+  font-size: 16px;
   font-weight: 700;
+  font-family: 'Ubuntu', sans-serif;
   cursor: pointer;
   transition: all 0.2s;
   margin-bottom: 24px;
 }
 
-.cta-btn:hover {
-  background: #E55A00;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
+.hx-search-forms_button:hover {
+  background: #9d3c1f;
+  border-color: #9d3c1f;
 }
 
-.cta-btn:active {
-  transform: translateY(0);
+.hx-search-forms_button:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(46,154,193,.2);
+}
+
+.hx-search-forms_button:active {
+  transform: translateY(1px);
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   body {
     padding: 12px;
   }
@@ -527,7 +557,7 @@ h2 {
     padding: 20px 12px;
   }
 
-  h1 {
+  .wizard-title {
     font-size: 26px;
   }
 
@@ -541,5 +571,9 @@ h2 {
 
   .time-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .airport-chips {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
 }

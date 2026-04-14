@@ -1,3 +1,15 @@
+// Flight API base URL
+const FLIGHT_API = 'https://flight.dock-yard.io';
+
+// Airport names mapping
+const AIRPORT_NAMES = {
+  LHR: 'Heathrow', LGW: 'Gatwick', MAN: 'Manchester', STN: 'Stansted',
+  LTN: 'Luton', BHX: 'Birmingham', EDI: 'Edinburgh', BRS: 'Bristol',
+  NCL: 'Newcastle', LBA: 'Leeds Bradford', EMA: 'East Midlands',
+  LPL: 'Liverpool', GLA: 'Glasgow', EXT: 'Exeter', LCY: 'London City',
+  SEN: 'Southend', ABZ: 'Aberdeen', CWL: 'Cardiff'
+};
+
 // Form state
 const state = {
   airport: null,
@@ -7,723 +19,497 @@ const state = {
   parkingToDate: null,
   parkingToTime: null,
   outboundFlight: null,
-  returnFlight: null,
-  userLocation: null
+  returnFlight: null
 };
 
-// Airport data
-const airports = {
-  'LHR': { name: 'Heathrow', lat: 51.4700, lon: -0.4543 },
-  'LGW': { name: 'Gatwick', lat: 51.1537, lon: -0.1821 },
-  'STN': { name: 'Stansted', lat: 51.8860, lon: 0.2389 },
-  'LTN': { name: 'Luton', lat: 51.8747, lon: -0.3683 },
-  'LCY': { name: 'London City', lat: 51.5053, lon: 0.0553 },
-  'SEN': { name: 'Southend', lat: 51.5714, lon: 0.6956 },
-  'BHX': { name: 'Birmingham', lat: 52.4539, lon: -1.7480 },
-  'MAN': { name: 'Manchester', lat: 53.3537, lon: -2.2750 },
-  'EMA': { name: 'East Midlands', lat: 52.8311, lon: -1.3278 },
-  'BRS': { name: 'Bristol', lat: 51.3827, lon: -2.7190 },
-  'LBA': { name: 'Leeds Bradford', lat: 53.8659, lon: -1.6605 },
-  'NCL': { name: 'Newcastle', lat: 55.0375, lon: -1.6917 },
-  'EDI': { name: 'Edinburgh', lat: 55.9500, lon: -3.3725 },
-  'GLA': { name: 'Glasgow', lat: 55.8719, lon: -4.4331 },
-  'ABZ': { name: 'Aberdeen', lat: 57.2020, lon: -2.1978 },
-  'CWL': { name: 'Cardiff', lat: 51.3968, lon: -3.3436 }
+// Airport lat/lon for GPS
+const airportCoords = {
+  LHR: [51.4700, -0.4543], LGW: [51.1537, -0.1821], STN: [51.8860, 0.2389],
+  LTN: [51.8747, -0.3683], LCY: [51.5053, 0.0553], SEN: [51.5714, 0.6956],
+  BHX: [52.4539, -1.7480], MAN: [53.3537, -2.2750], EMA: [52.8311, -1.3278],
+  BRS: [51.3827, -2.7190], LBA: [53.8659, -1.6605], NCL: [55.0375, -1.6917],
+  EDI: [55.9500, -3.3725], GLA: [55.8719, -4.4331], ABZ: [57.2020, -2.1978],
+  CWL: [51.3968, -3.3436]
 };
-
-// Mock flight data
-const mockFlights = {
-  'LHR': [
-    { number: 'BA2561', airline: 'British Airways', departure: '07:00', arrival: '09:30', destination: 'Malaga', destinationCode: 'AGP' },
-    { number: 'EZY8901', airline: 'easyJet', departure: '09:15', arrival: '12:45', destination: 'Alicante', destinationCode: 'ALC' },
-    { number: 'BA456', airline: 'British Airways', departure: '11:30', arrival: '14:00', destination: 'Barcelona', destinationCode: 'BCN' }
-  ],
-  'LGW': [
-    { number: 'U25725', airline: 'easyJet', departure: '07:00', arrival: '10:15', destination: 'Gran Canaria', destinationCode: 'LPA' },
-    { number: 'BY123', airline: 'TUI', departure: '09:30', arrival: '12:45', destination: 'Tenerife', destinationCode: 'TFS' }
-  ]
-};
-
-// Current step
-let currentStep = 1;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-  initializeApp();
-  checkURLParams();
-});
-
-function initializeApp() {
+  setupHashRouting();
   setupAirportSelection();
   setupGPSButton();
+  checkURLParams();
+  
+  // Set initial step from hash or default to step 1
+  const hash = window.location.hash || '#/step-1';
+  window.location.hash = hash;
+  handleHashChange();
+});
+
+// Hash-based routing
+function setupHashRouting() {
+  window.addEventListener('hashchange', handleHashChange);
 }
 
-// Check URL parameters
+function handleHashChange() {
+  const hash = window.location.hash.replace('#/', '');
+  const stepMatch = hash.match(/step-(\d+)/);
+  
+  if (stepMatch) {
+    const stepNum = parseInt(stepMatch[1]);
+    showStep(stepNum);
+  }
+}
+
+function showStep(stepNum) {
+  document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+  const stepEl = document.querySelector(`[data-step="${stepNum}"]`);
+  if (stepEl) {
+    stepEl.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Initialize step-specific content
+    if (stepNum === 2) renderCalendarFrom();
+    if (stepNum === 3) setupOutboundFlightSearch();
+    if (stepNum === 4) setupDropoffTime();
+    if (stepNum === 5) renderCalendarTo();
+    if (stepNum === 6) setupReturnFlightSearch();
+    if (stepNum === 7) setupCollectionTime();
+    if (stepNum === 8) renderSummary();
+  }
+}
+
+function goToStep(stepNum) {
+  window.location.hash = `#/step-${stepNum}`;
+}
+
+// URL params
 function checkURLParams() {
   const params = new URLSearchParams(window.location.search);
-  const locationParam = params.get('location');
-
-  if (locationParam) {
-    // Auto-select airport from URL parameter
-    const airport = locationParam.toUpperCase();
-    if (airports[airport]) {
-      state.airport = airport;
-      state.airportName = airports[airport].name;
+  const location = params.get('location') || params.get('Location');
+  
+  if (location) {
+    const airportCode = location.toUpperCase();
+    if (AIRPORT_NAMES[airportCode]) {
+      state.airport = airportCode;
+      state.airportName = AIRPORT_NAMES[airportCode];
       goToStep(2);
     }
   }
 }
 
-// Airport Selection
+// Airport selection
 function setupAirportSelection() {
-  // Nearest airport chips
-  document.querySelectorAll('.airport-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      handleAirportSelection(btn.dataset.airport, btn);
-    });
-  });
-
-  // All airports list
-  document.querySelectorAll('.airport-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      handleAirportSelection(btn.dataset.airport, btn);
-    });
+  document.querySelectorAll('.airport-chip, .airport-item').forEach(btn => {
+    btn.addEventListener('click', () => handleAirportClick(btn));
   });
 }
 
-function handleAirportSelection(airportCode, button) {
-  state.airport = airportCode;
-  state.airportName = airports[airportCode].name;
-
-  // Add clicked class with 250ms delay
-  button.classList.add('clicked');
-
+function handleAirportClick(btn) {
+  const code = btn.dataset.airport;
+  state.airport = code;
+  state.airportName = AIRPORT_NAMES[code];
+  document.title = `${state.airportName} Parking`;
+  
+  btn.classList.add('clicked');
   setTimeout(() => {
-    button.classList.remove('clicked');
+    btn.classList.remove('clicked');
     goToStep(2);
   }, 250);
 }
 
-// GPS Button
+// GPS
 function setupGPSButton() {
-  const gpsBtn = document.getElementById('gps-btn');
-  const gpsText = document.getElementById('gps-text');
-
-  gpsBtn.addEventListener('click', () => {
-    gpsText.textContent = 'Getting location...';
-
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        position => {
-          state.userLocation = {
-            lat: position.coords.latitude,
-            lon: position.coords.longitude
-          };
-
-          const nearest = findNearestAirports(state.userLocation);
-          updateNearestAirports(nearest);
-
-          gpsText.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> ${state.userLocation.lat.toFixed(4)}°N ${state.userLocation.lon.toFixed(4)}°E`;
-        },
-        error => {
-          gpsText.textContent = 'Location access denied';
-        }
-      );
-    } else {
-      gpsText.textContent = 'GPS not available';
+  const btn = document.getElementById('gps-btn');
+  const text = document.getElementById('gps-text');
+  
+  btn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      text.textContent = 'GPS not available';
+      return;
     }
-  });
-}
-
-function findNearestAirports(location) {
-  const airportDistances = Object.entries(airports).map(([code, airport]) => {
-    const distance = calculateDistance(
-      location.lat, location.lon,
-      airport.lat, airport.lon
+    
+    text.textContent = 'Getting location...';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const nearest = findNearestAirports(pos.coords.latitude, pos.coords.longitude);
+        updateNearestAirports(nearest);
+        text.textContent = `GPS: ${pos.coords.latitude.toFixed(4)}°N ${pos.coords.longitude.toFixed(4)}°E`;
+      },
+      () => { text.textContent = 'Location denied'; }
     );
-    return { code, ...airport, distance };
   });
-
-  return airportDistances.sort((a, b) => a.distance - b.distance).slice(0, 4);
 }
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
+function findNearestAirports(lat, lon) {
+  const distances = Object.entries(airportCoords).map(([code, [aLat, aLon]]) => ({
+    code,
+    name: AIRPORT_NAMES[code],
+    distance: haversine(lat, lon, aLat, aLon)
+  }));
+  return distances.sort((a, b) => a.distance - b.distance).slice(0, 4);
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
+  const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function updateNearestAirports(nearest) {
+function updateNearestAirports(airports) {
   const container = document.getElementById('nearest-airports');
   container.innerHTML = '';
-
-  nearest.forEach(airport => {
+  airports.forEach(ap => {
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'airport-chip';
-    btn.dataset.airport = airport.code;
-    btn.textContent = `${airport.name} (${airport.distance.toFixed(0)}km)`;
-    btn.addEventListener('click', () => {
-      handleAirportSelection(airport.code, btn);
-    });
+    btn.dataset.airport = ap.code;
+    btn.textContent = ap.name;
+    btn.addEventListener('click', () => handleAirportClick(btn));
     container.appendChild(btn);
   });
 }
 
-// Step Navigation
-function goToStep(stepNumber) {
-  document.querySelectorAll('.step').forEach(s => s.classList.add('hidden'));
-  currentStep = stepNumber;
-
-  switch(stepNumber) {
-    case 1:
-      document.getElementById('step-airport').classList.remove('hidden');
-      break;
-    case 2:
-      document.getElementById('step-parking-from').classList.remove('hidden');
-      renderCalendar('calendar-from', handleParkingFromSelection);
-      break;
-    case 3:
-      document.getElementById('step-outbound-flight').classList.remove('hidden');
-      setupOutboundFlightSearch();
-      break;
-    case 4:
-      document.getElementById('step-dropoff-time').classList.remove('hidden');
-      setupDropoffTime();
-      break;
-    case 5:
-      document.getElementById('step-parking-to').classList.remove('hidden');
-      renderReturnCalendar();
-      break;
-    case 6:
-      document.getElementById('step-return-flight').classList.remove('hidden');
-      setupReturnFlightSearch();
-      break;
-    case 7:
-      document.getElementById('step-collection-time').classList.remove('hidden');
-      setupCollectionTime();
-      break;
-    case 8:
-      document.getElementById('step-summary').classList.remove('hidden');
-      renderSummary();
-      break;
-  }
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+// Calendar
+function renderCalendarFrom() {
+  renderCalendar('calendar-from', date => {
+    state.parkingFromDate = formatDate(date);
+    goToStep(3);
+  });
 }
 
-// Calendar Rendering
-function renderCalendar(containerId, onDateSelect) {
+function renderCalendarTo() {
+  const bar = document.getElementById('return-reminder-bar');
+  const dropoffDate = new Date(state.parkingFromDate);
+  bar.textContent = `Dropping off: ${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
+  
+  renderCalendar('calendar-to', date => {
+    state.parkingToDate = formatDate(date);
+    goToStep(6);
+  }, new Date(state.parkingFromDate));
+}
+
+function renderCalendar(containerId, onSelect, minDate = new Date()) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-
+  
   const today = new Date();
-  const months = 4; // Show 4 months
-
-  for (let i = 0; i < months; i++) {
+  for (let i = 0; i < 4; i++) {
     const month = new Date(today.getFullYear(), today.getMonth() + i, 1);
-    const monthEl = createMonthCalendar(month, onDateSelect, today);
-    container.appendChild(monthEl);
+    container.appendChild(createMonthCalendar(month, onSelect, minDate, today));
   }
 }
 
-function createMonthCalendar(month, onDateSelect, today) {
-  const monthEl = document.createElement('div');
-  monthEl.className = 'calendar-month';
-
-  const monthTitle = document.createElement('div');
-  monthTitle.className = 'calendar-month-title';
-  monthTitle.textContent = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  monthEl.appendChild(monthTitle);
-
+function createMonthCalendar(month, onSelect, minDate, today) {
+  const div = document.createElement('div');
+  div.className = 'calendar-month';
+  
+  const title = document.createElement('div');
+  title.className = 'calendar-month-title';
+  title.textContent = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  div.appendChild(title);
+  
   const grid = document.createElement('div');
   grid.className = 'calendar-grid';
-
-  // Day headers
-  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  days.forEach(day => {
-    const header = document.createElement('div');
-    header.className = 'calendar-day-header';
-    header.textContent = day;
-    grid.appendChild(header);
+  
+  ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].forEach(day => {
+    const h = document.createElement('div');
+    h.className = 'calendar-day-header';
+    h.textContent = day;
+    grid.appendChild(h);
   });
-
-  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
+  
   const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
-  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1; // Adjust so Monday = 0
-
-  // Empty cells before first day
-  for (let i = 0; i < adjustedFirstDay; i++) {
+  const offset = firstDay === 0 ? 6 : firstDay - 1;
+  
+  for (let i = 0; i < offset; i++) {
     const empty = document.createElement('div');
     empty.className = 'calendar-day empty';
     grid.appendChild(empty);
   }
-
-  // Days of month
+  
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(month.getFullYear(), month.getMonth(), day);
-    const dayEl = document.createElement('button');
-    dayEl.className = 'calendar-day';
-    dayEl.textContent = day;
-
-    const dateStr = formatDate(date);
-    const isPast = date < today && !isSameDay(date, today);
-
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'calendar-day';
+    btn.textContent = day;
+    
+    const isPast = date < minDate && !isSameDay(date, minDate);
     if (isPast) {
-      dayEl.classList.add('past');
-      dayEl.disabled = true;
+      btn.classList.add('past');
+      btn.disabled = true;
     } else {
-      if (isSameDay(date, today)) {
-        dayEl.classList.add('today');
-      }
-
-      if (state.parkingFromDate && dateStr === state.parkingFromDate) {
-        dayEl.classList.add('start-date');
-      }
-
-      dayEl.addEventListener('click', () => {
-        dayEl.classList.add('clicked');
+      if (isSameDay(date, today)) btn.classList.add('today');
+      if (state.parkingFromDate && formatDate(date) === state.parkingFromDate) btn.classList.add('start-date');
+      
+      btn.addEventListener('click', () => {
+        btn.classList.add('clicked');
         setTimeout(() => {
-          dayEl.classList.remove('clicked');
-          onDateSelect(date);
+          btn.classList.remove('clicked');
+          onSelect(date);
         }, 250);
       });
     }
-
-    grid.appendChild(dayEl);
+    
+    grid.appendChild(btn);
   }
-
-  monthEl.appendChild(grid);
-  return monthEl;
+  
+  div.appendChild(grid);
+  return div;
 }
 
-function renderReturnCalendar() {
-  const container = document.getElementById('calendar-to');
-  container.innerHTML = '';
-
-  // Update reminder bar
-  const reminderBar = document.getElementById('return-reminder-bar');
-  const dropoffDate = new Date(state.parkingFromDate);
-  reminderBar.textContent = `Dropping off: ${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
-
-  // Start from parking from date
-  const startDate = new Date(state.parkingFromDate);
-  const months = 4;
-
-  for (let i = 0; i < months; i++) {
-    const month = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
-    const monthEl = createReturnMonthCalendar(month, startDate);
-    container.appendChild(monthEl);
-  }
-}
-
-function createReturnMonthCalendar(month, minDate) {
-  const monthEl = document.createElement('div');
-  monthEl.className = 'calendar-month';
-
-  const monthTitle = document.createElement('div');
-  monthTitle.className = 'calendar-month-title';
-  monthTitle.textContent = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  monthEl.appendChild(monthTitle);
-
-  const grid = document.createElement('div');
-  grid.className = 'calendar-grid';
-
-  // Day headers
-  const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-  days.forEach(day => {
-    const header = document.createElement('div');
-    header.className = 'calendar-day-header';
-    header.textContent = day;
-    grid.appendChild(header);
-  });
-
-  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
-  const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
-
-  for (let i = 0; i < adjustedFirstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'calendar-day empty';
-    grid.appendChild(empty);
-  }
-
-  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
-
-  for (let day = 1; day <= daysInMonth; day++) {
-    const date = new Date(month.getFullYear(), month.getMonth(), day);
-    const dayEl = document.createElement('button');
-    dayEl.className = 'calendar-day';
-    dayEl.textContent = day;
-
-    const dateStr = formatDate(date);
-    const isPast = date < minDate;
-
-    if (isPast) {
-      dayEl.classList.add('past');
-      dayEl.disabled = true;
-    } else {
-      if (isSameDay(date, minDate)) {
-        dayEl.classList.add('start-date');
-      }
-
-      dayEl.addEventListener('click', () => {
-        dayEl.classList.add('clicked');
-        setTimeout(() => {
-          dayEl.classList.remove('clicked');
-          handleParkingToSelection(date);
-        }, 250);
-      });
-    }
-
-    grid.appendChild(dayEl);
-  }
-
-  monthEl.appendChild(grid);
-  return monthEl;
-}
-
-function handleParkingFromSelection(date) {
-  state.parkingFromDate = formatDate(date);
-  goToStep(3);
-}
-
-function handleParkingToSelection(date) {
-  state.parkingToDate = formatDate(date);
-  goToStep(6);
-}
-
-// Flight Search
-function setupOutboundFlightSearch() {
+// Flight lookup
+async function setupOutboundFlightSearch() {
   const subtitle = document.getElementById('outbound-subtitle');
-  const parkingDate = new Date(state.parkingFromDate);
-  subtitle.textContent = `${state.airportName} → ${formatLongDateShort(parkingDate)}`;
-
-  const skipBtn = document.getElementById('skip-outbound');
-  skipBtn.addEventListener('click', () => goToStep(4), { once: true });
-
-  const searchInput = document.getElementById('flight-search-out');
+  const loading = document.getElementById('flight-loading-out');
   const flightList = document.getElementById('flight-list-out');
-
-  const flights = mockFlights[state.airport] || [];
-  renderFlights(flights, flightList, handleOutboundFlightSelection);
-
-  searchInput.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    const filtered = flights.filter(f =>
-      f.number.toLowerCase().includes(query) ||
-      f.destination.toLowerCase().includes(query) ||
-      f.airline.toLowerCase().includes(query)
-    );
-    renderFlights(filtered, flightList, handleOutboundFlightSelection);
-  });
+  
+  const date = new Date(state.parkingFromDate);
+  subtitle.textContent = `${state.airportName} → ${formatShortDate(date)}`;
+  
+  document.getElementById('skip-outbound').onclick = () => goToStep(4);
+  
+  loading.style.display = 'block';
+  flightList.innerHTML = '';
+  
+  try {
+    const dateStr = state.parkingFromDate;
+    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&fullResults=false`;
+    const res = await fetch(url);
+    const flights = await res.json();
+    
+    loading.style.display = 'none';
+    
+    if (flights.length === 0) {
+      flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#767d7d;">No flights found</p>';
+      return;
+    }
+    
+    renderFlightList(flights.slice(0, 50), flightList, f => {
+      state.outboundFlight = f;
+      goToStep(4);
+    });
+  } catch (err) {
+    loading.style.display = 'none';
+    flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#bc140f;">Error loading flights</p>';
+  }
 }
 
-function setupReturnFlightSearch() {
+async function setupReturnFlightSearch() {
   const subtitle = document.getElementById('return-subtitle');
-  const returnDate = new Date(state.parkingToDate);
-  subtitle.textContent = `${formatLongDateShort(returnDate)} → ${state.airportName}`;
-
-  const skipBtn = document.getElementById('skip-return');
-  skipBtn.addEventListener('click', () => goToStep(7), { once: true });
-
-  // Show date selector
-  const datesContainer = document.getElementById('return-flight-dates');
-  const parkingTo = new Date(state.parkingToDate);
-  const dayBefore = new Date(parkingTo);
-  dayBefore.setDate(dayBefore.getDate() - 1);
-
-  datesContainer.innerHTML = `
-    <button class="flight-date-btn" data-date="${formatDate(dayBefore)}">
-      ${formatShortDate(dayBefore)}
-    </button>
-    <button class="flight-date-btn active" data-date="${formatDate(parkingTo)}">
-      ${formatShortDate(parkingTo)}
-    </button>
-  `;
-
-  // Render flights for selected date
+  const loading = document.getElementById('flight-loading-return');
   const flightList = document.getElementById('flight-list-return');
-  const flights = mockFlights[state.airport] || [];
-  renderReturnFlights(flights, flightList);
-
-  // Date button handlers
-  document.querySelectorAll('.flight-date-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.flight-date-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  
+  const date = new Date(state.parkingToDate);
+  subtitle.textContent = `${formatShortDate(date)} → ${state.airportName}`;
+  
+  document.getElementById('skip-return').onclick = () => goToStep(7);
+  
+  loading.style.display = 'block';
+  flightList.innerHTML = '';
+  
+  try {
+    const dateStr = state.parkingToDate;
+    const url = `${FLIGHT_API}/searchDayFlights?arrival=${state.airport}&departDate=${dateStr}&fullResults=false`;
+    const res = await fetch(url);
+    const flights = await res.json();
+    
+    loading.style.display = 'none';
+    
+    if (flights.length === 0) {
+      flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#767d7d;">No flights found</p>';
+      return;
+    }
+    
+    renderFlightList(flights.slice(0, 50), flightList, f => {
+      state.returnFlight = f;
+      goToStep(7);
     });
-  });
+  } catch (err) {
+    loading.style.display = 'none';
+    flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#bc140f;">Error loading flights</p>';
+  }
 }
 
-function renderFlights(flights, container, onSelect) {
+function renderFlightList(flights, container, onSelect) {
   container.innerHTML = '';
-
-  flights.forEach(flight => {
-    const flightEl = document.createElement('button');
-    flightEl.className = 'flight-item';
-    flightEl.innerHTML = `
-      <div class="flight-number">
-        ${flight.number} • ${flight.airline}
-        <span style="margin-left: auto;">${flight.departure}</span>
-      </div>
+  flights.forEach(f => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'flight-item';
+    
+    const code = (f.flight && f.flight.code) || '';
+    const depTime = (f.departure && f.departure.time) || '';
+    const arrTime = (f.arrival && f.arrival.time) || '';
+    const depIata = (f.departure && f.departure.airport_iata) || '';
+    const arrIata = (f.arrival && f.arrival.airport_iata) || '';
+    const stops = (f.flight && f.flight.connectingFlights && f.flight.connectingFlights.amount) || 0;
+    
+    item.innerHTML = `
+      <div class="flight-code">${code} <span style="margin-left:auto;">${stops === 0 ? 'Direct' : stops + ' stop' + (stops > 1 ? 's' : '')}</span></div>
       <div class="flight-times">
-        <div class="flight-time">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-          ${flight.departure}
-          <span class="flight-airport">${state.airportName}</span>
-        </div>
-        <div class="flight-time">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-          ${flight.arrival}
-          <span class="flight-airport">${flight.destination}</span>
-        </div>
+        <div class="flight-time">${depTime} <span class="flight-airport">${depIata}</span></div>
+        <span style="color:#767d7d;">→</span>
+        <div class="flight-time">${arrTime} <span class="flight-airport">${arrIata}</span></div>
       </div>
     `;
-
-    flightEl.addEventListener('click', () => {
-      flightEl.classList.add('clicked');
+    
+    item.addEventListener('click', () => {
+      item.classList.add('clicked');
       setTimeout(() => {
-        flightEl.classList.remove('clicked');
-        onSelect(flight);
+        item.classList.remove('clicked');
+        onSelect(f);
       }, 250);
     });
-
-    container.appendChild(flightEl);
+    
+    container.appendChild(item);
   });
 }
 
-function renderReturnFlights(flights, container) {
-  container.innerHTML = '';
-
-  flights.forEach(flight => {
-    const flightEl = document.createElement('button');
-    flightEl.className = 'flight-item';
-    flightEl.innerHTML = `
-      <div class="flight-number">
-        ${flight.number} • ${flight.airline}
-        <span style="margin-left: auto;">${flight.departure}</span>
-      </div>
-      <div class="flight-times">
-        <div class="flight-time">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-          ${flight.departure}
-          <span class="flight-airport">${flight.destination}</span>
-        </div>
-        <div class="flight-time">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          ${flight.arrival}
-          <span class="flight-airport">${state.airportName}</span>
-        </div>
-      </div>
-    `;
-
-    flightEl.addEventListener('click', () => {
-      flightEl.classList.add('clicked');
-      setTimeout(() => {
-        flightEl.classList.remove('clicked');
-        handleReturnFlightSelection(flight);
-      }, 250);
-    });
-
-    container.appendChild(flightEl);
-  });
-}
-
-function handleOutboundFlightSelection(flight) {
-  state.outboundFlight = flight;
-  goToStep(4);
-}
-
-function handleReturnFlightSelection(flight) {
-  state.returnFlight = flight;
-  goToStep(7);
-}
-
-// Time Selection
+// Time selection
 function setupDropoffTime() {
   const reminder = document.getElementById('dropoff-reminder');
-
+  
+  let preselected = '04:00';
   if (state.outboundFlight) {
-    const flightTime = state.outboundFlight.departure;
-    const preselectedTime = calculatePreselectedTime(flightTime, -3);
-
-    reminder.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-      </svg>
-      <div class="flight-reminder-text">
-        ${state.outboundFlight.number} to ${state.outboundFlight.destination} • departs ${flightTime} • ${formatLongDate(new Date(state.parkingFromDate))} • ${state.airportName}
-      </div>
-    `;
-
-    renderTimeGrid('time-grid-dropoff', handleDropoffTimeSelection, preselectedTime);
+    reminder.style.display = 'block';
+    const f = state.outboundFlight;
+    const code = (f.flight && f.flight.code) || '';
+    const depTime = (f.departure && f.departure.time) || '';
+    const arrIata = (f.arrival && f.arrival.airport_iata) || '';
+    reminder.textContent = `${code} to ${arrIata} departs ${depTime} • ${formatLongDate(new Date(state.parkingFromDate))}`;
+    
+    if (depTime) {
+      const [h] = depTime.split(':').map(Number);
+      preselected = `${String(Math.max(0, h - 3)).padStart(2, '0')}:00`;
+    }
   } else {
     reminder.style.display = 'none';
-    renderTimeGrid('time-grid-dropoff', handleDropoffTimeSelection);
   }
+  
+  renderTimeGrid('time-grid-dropoff', time => {
+    state.parkingFromTime = time;
+    goToStep(5);
+  }, preselected);
 }
 
 function setupCollectionTime() {
   const reminder = document.getElementById('collection-reminder');
   const subtitle = document.getElementById('collection-subtitle');
-
+  
+  const returnDate = new Date(state.parkingToDate);
+  subtitle.textContent = `What time will you collect your car on ${formatShortDate(returnDate)}?`;
+  
+  let preselected = '14:00';
   if (state.returnFlight) {
-    const flightTime = state.returnFlight.arrival;
-    const preselectedTime = calculatePreselectedTime(flightTime, 2);
-
-    const returnDate = new Date(state.parkingToDate);
-    subtitle.textContent = `What time will you collect your car on ${formatShortDate(returnDate)}?`;
-
-    reminder.innerHTML = `
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-      </svg>
-      <div class="flight-reminder-text">
-        ${state.returnFlight.number} lands ${flightTime} • ${formatLongDate(returnDate)} • ${state.airportName}
-      </div>
-    `;
-
-    renderTimeGrid('time-grid-collection', handleCollectionTimeSelection, preselectedTime);
+    reminder.style.display = 'block';
+    const f = state.returnFlight;
+    const code = (f.flight && f.flight.code) || '';
+    const arrTime = (f.arrival && f.arrival.time) || '';
+    reminder.textContent = `${code} lands ${arrTime} • ${formatLongDate(returnDate)}`;
+    
+    if (arrTime) {
+      const [h] = arrTime.split(':').map(Number);
+      preselected = `${String(Math.min(23, h + 2)).padStart(2, '0')}:00`;
+    }
   } else {
     reminder.style.display = 'none';
-    const returnDate = new Date(state.parkingToDate);
-    subtitle.textContent = `What time will you collect your car on ${formatShortDate(returnDate)}?`;
-    renderTimeGrid('time-grid-collection', handleCollectionTimeSelection);
   }
+  
+  renderTimeGrid('time-grid-collection', time => {
+    state.parkingToTime = time;
+    goToStep(8);
+  }, preselected);
 }
 
-function renderTimeGrid(containerId, onSelect, preselectedTime) {
+function renderTimeGrid(containerId, onSelect, preselected) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-
+  
   const times = [];
-  for (let h = 0; h < 24; h++) {
-    times.push(`${String(h).padStart(2, '0')}:00`);
-  }
+  for (let h = 0; h < 24; h++) times.push(`${String(h).padStart(2, '0')}:00`);
   times.push('23:59');
-
+  
   times.forEach(time => {
     const btn = document.createElement('button');
+    btn.type = 'button';
     btn.className = 'time-btn';
     btn.textContent = time;
-
-    if (preselectedTime && time === preselectedTime) {
-      btn.classList.add('preselected');
-    }
-
+    
+    if (time === preselected) btn.classList.add('preselected');
+    
     btn.addEventListener('click', () => {
-      // Remove preselected from all
       container.querySelectorAll('.time-btn').forEach(b => b.classList.remove('preselected'));
-
       btn.classList.add('clicked');
       setTimeout(() => {
         btn.classList.remove('clicked');
         onSelect(time);
       }, 250);
     });
-
+    
     container.appendChild(btn);
   });
-}
-
-function calculatePreselectedTime(flightTime, hourOffset) {
-  const [hours, minutes] = flightTime.split(':').map(Number);
-  let newHours = hours + hourOffset;
-
-  if (newHours < 0) newHours = 0;
-  if (newHours > 23) newHours = 23;
-
-  return `${String(newHours).padStart(2, '0')}:00`;
-}
-
-function handleDropoffTimeSelection(time) {
-  state.parkingFromTime = time;
-  goToStep(5);
-}
-
-function handleCollectionTimeSelection(time) {
-  state.parkingToTime = time;
-  goToStep(8);
 }
 
 // Summary
 function renderSummary() {
   document.getElementById('summary-airport').textContent = state.airportName;
-
+  
   const dropoffDate = new Date(state.parkingFromDate);
-  document.getElementById('summary-dropoff').textContent =
-    `${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
-
+  document.getElementById('summary-dropoff').textContent = `${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
+  
+  const dropoffFlight = document.getElementById('summary-dropoff-flight');
   if (state.outboundFlight) {
-    document.getElementById('summary-dropoff-flight').innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-      </svg>
-      ${state.outboundFlight.number} to ${state.outboundFlight.destination} at ${state.outboundFlight.departure}
-    `;
+    const f = state.outboundFlight;
+    const code = (f.flight && f.flight.code) || '';
+    const depTime = (f.departure && f.departure.time) || '';
+    const arrIata = (f.arrival && f.arrival.airport_iata) || '';
+    dropoffFlight.textContent = `✈ ${code} to ${arrIata} at ${depTime}`;
+  } else {
+    dropoffFlight.textContent = '';
   }
-
+  
   const pickupDate = new Date(state.parkingToDate);
-  document.getElementById('summary-pickup').textContent =
-    `${formatLongDate(pickupDate)} at ${state.parkingToTime}`;
-
+  document.getElementById('summary-pickup').textContent = `${formatLongDate(pickupDate)} at ${state.parkingToTime}`;
+  
+  const pickupFlight = document.getElementById('summary-pickup-flight');
   if (state.returnFlight) {
-    document.getElementById('summary-pickup-flight').innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-      </svg>
-      ${state.returnFlight.number} from ${state.returnFlight.destination} at ${state.returnFlight.arrival}
-    `;
+    const f = state.returnFlight;
+    const code = (f.flight && f.flight.code) || '';
+    const arrTime = (f.arrival && f.arrival.time) || '';
+    const depIata = (f.departure && f.departure.airport_iata) || '';
+    pickupFlight.textContent = `✈ ${code} from ${depIata} at ${arrTime}`;
+  } else {
+    pickupFlight.textContent = '';
   }
-
-  document.getElementById('search-btn').addEventListener('click', performSearch, { once: true });
+  
+  document.getElementById('search-btn').onclick = performSearch;
 }
 
 function performSearch() {
-  // Build Holiday Extras search URL
-  const params = new URLSearchParams({
-    product: 'PAR',
-    location: state.airport,
-    arrive_date: state.parkingFromDate.replace(/-/g, ''),
-    arrive_time: state.parkingFromTime.replace(':', ''),
-    depart_date: state.parkingToDate.replace(/-/g, ''),
-    depart_time: state.parkingToTime.replace(':', '')
-  });
-
-  if (state.outboundFlight) {
-    params.set('OutFltNo', state.outboundFlight.number);
-    params.set('OutFltTm', state.outboundFlight.departure.replace(':', ''));
-  }
-
-  if (state.returnFlight) {
-    params.set('InFltNo', state.returnFlight.number);
-    params.set('InFltTm', state.returnFlight.arrival.replace(':', ''));
-  }
-
-  const url = `https://www.holidayextras.com/search-results.html?${params.toString()}`;
+  const host = window.location.host;
+  const isLocal = host.startsWith('127') || host.includes('github.io');
+  const basedomain = isLocal ? 'www.holidayextras.com' : host;
+  
+  const outDate = state.parkingFromDate.replace(/-/g, '');
+  const inDate = state.parkingToDate.replace(/-/g, '');
+  const outTime = state.parkingFromTime.replace(':', '%3A');
+  const inTime = state.parkingToTime.replace(':', '%3A');
+  
+  const outFlight = state.outboundFlight ? ((state.outboundFlight.flight && state.outboundFlight.flight.code) || 'default') : 'default';
+  const inFlight = state.returnFlight ? ((state.returnFlight.flight && state.returnFlight.flight.code) || 'default') : 'default';
+  
+  const url = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=WY992&ppts=&customer_ref=&lang=en&adults=2&depart=${state.airport}&terminal=&arrive=&flight=${outFlight}&in=${inDate}&out=${outDate}&park_from=${outTime}&park_to=${inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=&promotionCode=`;
+  
   window.location.href = url;
 }
 
-// Utility Functions
+// Utilities
 function formatDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return date.toISOString().split('T')[0];
 }
 
 function formatLongDate(date) {
@@ -732,21 +518,12 @@ function formatLongDate(date) {
   return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-function formatLongDateShort(date) {
+function formatShortDate(date) {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
 }
 
-function formatShortDate(date) {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const day = date.getDate();
-  const month = date.toLocaleDateString('en-US', { month: 'short' });
-  return `${days[date.getDay()]} ${day} ${month}`;
-}
-
-function isSameDay(date1, date2) {
-  return date1.getDate() === date2.getDate() &&
-         date1.getMonth() === date2.getMonth() &&
-         date1.getFullYear() === date2.getFullYear();
+function isSameDay(d1, d2) {
+  return d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
 }
