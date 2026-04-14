@@ -319,21 +319,26 @@ function createMonthCalendar(month, onSelect, minDate, today) {
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(month.getFullYear(), month.getMonth(), day);
+
+    const isPast = date < minDate && !isSameDay(date, minDate);
+    if (isPast) {
+      // Hide past dates instead of showing them disabled
+      const empty = document.createElement('div');
+      empty.className = 'calendar-day empty';
+      grid.appendChild(empty);
+      continue;
+    }
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'calendar-day';
     btn.textContent = day;
-    
-    const isPast = date < minDate && !isSameDay(date, minDate);
-    if (isPast) {
-      btn.classList.add('past');
-      btn.disabled = true;
-    } else {
-      if (isSameDay(date, today)) btn.classList.add('today');
-      if (state.parkingFromDate && formatDate(date) === state.parkingFromDate) btn.classList.add('start-date');
-      
-      btn.addEventListener('click', () => {
-        btn.classList.add('clicked');
+
+    if (isSameDay(date, today)) btn.classList.add('today');
+    if (state.parkingFromDate && formatDate(date) === state.parkingFromDate) btn.classList.add('start-date');
+
+    btn.addEventListener('click', () => {
+      btn.classList.add('clicked');
         setTimeout(() => {
           btn.classList.remove('clicked');
           onSelect(date);
