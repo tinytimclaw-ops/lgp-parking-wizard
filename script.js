@@ -56,7 +56,7 @@ const airportCoords = {
 function updateHeaderTitle() {
   const headerTitle = document.getElementById('header-title');
   if (state.airportName) {
-    headerTitle.textContent = `${state.airportName} Parking`;
+    headerTitle.textContent = `${state.airportName} Airport Parking`;
   } else {
     headerTitle.textContent = 'Airport Parking';
   }
@@ -142,7 +142,7 @@ function checkURLParams() {
     if (AIRPORT_NAMES[airportCode]) {
       state.airport = airportCode;
       state.airportName = AIRPORT_NAMES[airportCode];
-      document.title = `${state.airportName} Parking`;
+      document.title = `${state.airportName} Airport Parking`;
       updateHeaderTitle();
       saveState();
       goToStep(2);
@@ -171,7 +171,7 @@ function handleAirportClick(btn) {
   state.airport = code;
   state.airportName = AIRPORT_NAMES[code];
   saveState();
-  document.title = `${state.airportName} Parking`;
+  document.title = `${state.airportName} Airport Parking`;
   updateHeaderTitle();
 
   btn.classList.add('clicked');
