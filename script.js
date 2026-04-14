@@ -54,11 +54,14 @@ document.addEventListener('DOMContentLoaded', () => {
   setupHashRouting();
   setupAirportSelection();
   setupGPSButton();
-  checkURLParams();
-  
-  // Set initial step from hash or default to step 1
-  const hash = window.location.hash || '#/step-1';
-  window.location.hash = hash;
+
+  // Check URL params first - if airport is set, skip to step 2
+  const hasAirportParam = checkURLParams();
+
+  // Set initial step from hash or default
+  if (!hasAirportParam && !window.location.hash) {
+    window.location.hash = '#/step-1';
+  }
   handleHashChange();
 });
 
@@ -102,16 +105,20 @@ function goToStep(stepNum) {
 // URL params
 function checkURLParams() {
   const params = new URLSearchParams(window.location.search);
-  const location = params.get('location') || params.get('Location');
-  
+  const location = params.get('location') || params.get('Location') || params.get('airport');
+
   if (location) {
     const airportCode = location.toUpperCase();
     if (AIRPORT_NAMES[airportCode]) {
       state.airport = airportCode;
       state.airportName = AIRPORT_NAMES[airportCode];
+      document.title = `${state.airportName} Parking`;
+      saveState();
       goToStep(2);
+      return true;
     }
   }
+  return false;
 }
 
 // Airport selection
