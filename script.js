@@ -661,7 +661,7 @@ function renderSummary() {
 function performSearch() {
   const host = window.location.host;
   const isLocal = host.startsWith('127') || host.includes('github.io');
-  const basedomain = isLocal ? 'www.holidayextras.com' : host;
+  const basedomain = isLocal ? 'www.holidayextras.com' : host.replace('www', 'app');
 
   const outDate = state.parkingFromDate;
   const inDate = state.parkingToDate;
