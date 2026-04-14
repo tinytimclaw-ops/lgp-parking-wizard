@@ -60,24 +60,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Set initial step from hash or default
   if (!hasAirportParam && !window.location.hash) {
-    window.location.hash = '#/step-1';
+    window.location.hash = '#/airport';
   }
   handleHashChange();
 });
 
 // Hash-based routing
+const STEP_ROUTES = {
+  1: 'airport',
+  2: 'parking-dates',
+  3: 'outbound-flight',
+  4: 'drop-off-time',
+  5: 'return-date',
+  6: 'return-flight',
+  7: 'collection-time',
+  8: 'summary'
+};
+
+const ROUTE_TO_STEP = Object.fromEntries(
+  Object.entries(STEP_ROUTES).map(([step, route]) => [route, parseInt(step)])
+);
+
 function setupHashRouting() {
   window.addEventListener('hashchange', handleHashChange);
 }
 
 function handleHashChange() {
   const hash = window.location.hash.replace('#/', '');
-  const stepMatch = hash.match(/step-(\d+)/);
-  
-  if (stepMatch) {
-    const stepNum = parseInt(stepMatch[1]);
-    showStep(stepNum);
-  }
+  const stepNum = ROUTE_TO_STEP[hash] || 1;
+  showStep(stepNum);
 }
 
 function showStep(stepNum) {
@@ -86,7 +97,7 @@ function showStep(stepNum) {
   if (stepEl) {
     stepEl.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
+
     // Initialize step-specific content
     if (stepNum === 2) renderCalendarFrom();
     if (stepNum === 3) setupOutboundFlightSearch();
@@ -99,7 +110,7 @@ function showStep(stepNum) {
 }
 
 function goToStep(stepNum) {
-  window.location.hash = `#/step-${stepNum}`;
+  window.location.hash = `#/${STEP_ROUTES[stepNum]}`;
 }
 
 // URL params
@@ -150,19 +161,36 @@ function handleAirportClick(btn) {
 function setupGPSButton() {
   const btn = document.getElementById('gps-btn');
   const text = document.getElementById('gps-text');
-  
+
+  // Restore saved GPS position
+  const savedGPS = localStorage.getItem('parkingWizardGPS');
+  if (savedGPS) {
+    try {
+      const { lat, lon } = JSON.parse(savedGPS);
+      const nearest = findNearestAirports(lat, lon);
+      updateNearestAirports(nearest);
+      text.textContent = `GPS: ${lat.toFixed(4)}°N ${lon.toFixed(4)}°E`;
+    } catch (e) {
+      // Ignore invalid GPS data
+    }
+  }
+
   btn.addEventListener('click', () => {
     if (!navigator.geolocation) {
       text.textContent = 'GPS not available';
       return;
     }
-    
+
     text.textContent = 'Getting location...';
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const nearest = findNearestAirports(pos.coords.latitude, pos.coords.longitude);
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        const nearest = findNearestAirports(lat, lon);
         updateNearestAirports(nearest);
-        text.textContent = `GPS: ${pos.coords.latitude.toFixed(4)}°N ${pos.coords.longitude.toFixed(4)}°E`;
+        text.textContent = `GPS: ${lat.toFixed(4)}°N ${lon.toFixed(4)}°E`;
+        // Save GPS position
+        localStorage.setItem('parkingWizardGPS', JSON.stringify({ lat, lon }));
       },
       () => { text.textContent = 'Location denied'; }
     );
