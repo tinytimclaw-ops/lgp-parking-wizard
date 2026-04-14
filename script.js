@@ -325,8 +325,17 @@ async function setupReturnFlightSearch() {
 
   try {
     const dateStr = state.parkingToDate;
-    // For return flights: search for flights with destination = origin airport
-    const url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
+
+    // For return flights: if we have an outbound flight, get the destination from it
+    // Otherwise just search all flights arriving at origin airport
+    let url;
+    if (state.outboundFlight && state.outboundFlight.arrival && state.outboundFlight.arrival.airport_iata) {
+      const outboundDestination = state.outboundFlight.arrival.airport_iata;
+      url = `${FLIGHT_API}/searchDayFlights?location=${outboundDestination}&departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
+    } else {
+      url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
+    }
+
     const res = await fetch(url);
     const flights = await res.json();
 
