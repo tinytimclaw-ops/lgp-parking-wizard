@@ -12,8 +12,39 @@ body {
   line-height: 1.5;
   color: #484e52;
   background: #fff;
-  padding: 20px;
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+/* LGP Header */
+.lgp-header {
+  background: #c74c28;
+  color: white;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.lgp-header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.lgp-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.lgp-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  letter-spacing: -0.5px;
 }
 
 #app {

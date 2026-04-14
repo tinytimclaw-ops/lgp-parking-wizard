@@ -52,11 +52,22 @@ const airportCoords = {
   CWL: [51.3968, -3.3436]
 };
 
+// Update header title
+function updateHeaderTitle() {
+  const headerTitle = document.getElementById('header-title');
+  if (state.airportName) {
+    headerTitle.textContent = `${state.airportName} Parking`;
+  } else {
+    headerTitle.textContent = 'Airport Parking';
+  }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   setupHashRouting();
   setupAirportSelection();
   setupGPSButton();
+  updateHeaderTitle();
 
   // Check URL params first - if airport is set, skip to step 2
   const hasAirportParam = checkURLParams();
@@ -132,6 +143,7 @@ function checkURLParams() {
       state.airport = airportCode;
       state.airportName = AIRPORT_NAMES[airportCode];
       document.title = `${state.airportName} Parking`;
+      updateHeaderTitle();
       saveState();
       goToStep(2);
       return true;
@@ -160,6 +172,7 @@ function handleAirportClick(btn) {
   state.airportName = AIRPORT_NAMES[code];
   saveState();
   document.title = `${state.airportName} Parking`;
+  updateHeaderTitle();
 
   btn.classList.add('clicked');
   setTimeout(() => {
