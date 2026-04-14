@@ -325,7 +325,8 @@ async function setupReturnFlightSearch() {
 
   try {
     const dateStr = state.parkingToDate;
-    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&arrivalDate=${dateStr}&fullResults=false`;
+    // For return flights: search for flights with destination = origin airport
+    const url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=false`;
     const res = await fetch(url);
     const flights = await res.json();
 
@@ -363,7 +364,9 @@ function setupFlightSearch(input, allFlights, container, onSelect) {
         const code = ((f.flight && f.flight.code) || '').toLowerCase();
         const depIata = ((f.departure && f.departure.airport_iata) || '').toLowerCase();
         const arrIata = ((f.arrival && f.arrival.airport_iata) || '').toLowerCase();
-        return code.includes(query) || depIata.includes(query) || arrIata.includes(query);
+        const depName = ((f.departure && f.departure.airport_name) || '').toLowerCase();
+        const arrName = ((f.arrival && f.arrival.airport_name) || '').toLowerCase();
+        return code.includes(query) || depIata.includes(query) || arrIata.includes(query) || depName.includes(query) || arrName.includes(query);
       });
       renderFlightList(filtered, container, onSelect);
     }
@@ -528,18 +531,17 @@ function renderSummary() {
 function performSearch() {
   const host = window.location.host;
   const isLocal = host.startsWith('127') || host.includes('github.io');
-  const basedomain = isLocal ? 'www.holidayextras.com' : host;
-  
-  const outDate = state.parkingFromDate.replace(/-/g, '');
-  const inDate = state.parkingToDate.replace(/-/g, '');
+  const basedomain = isLocal ? 'www.holidayextras.com' : host.replace('www', 'app');
+
+  const outDate = state.parkingFromDate;
+  const inDate = state.parkingToDate;
   const outTime = state.parkingFromTime.replace(':', '%3A');
   const inTime = state.parkingToTime.replace(':', '%3A');
-  
-  const outFlight = state.outboundFlight ? ((state.outboundFlight.flight && state.outboundFlight.flight.code) || 'default') : 'default';
-  const inFlight = state.returnFlight ? ((state.returnFlight.flight && state.returnFlight.flight.code) || 'default') : 'default';
-  
-  const url = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=WY992&ppts=&customer_ref=&lang=en&adults=2&depart=${state.airport}&terminal=&arrive=&flight=${outFlight}&in=${inDate}&out=${outDate}&park_from=${outTime}&park_to=${inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=&promotionCode=`;
-  
+
+  const flight = state.outboundFlight ? ((state.outboundFlight.flight && state.outboundFlight.flight.code) || 'default') : 'default';
+
+  const url = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=WY992&ppts=&customer_ref=&lang=en&adults=2&depart=${state.airport}&terminal=&arrive=&flight=${flight}&in=${inDate}&out=${outDate}&park_from=${outTime}&park_to=${inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=&promotionCode=`;
+
   window.location.href = url;
 }
 
