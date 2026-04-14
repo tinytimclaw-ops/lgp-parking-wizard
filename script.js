@@ -10,7 +10,23 @@ const AIRPORT_NAMES = {
   SEN: 'Southend', ABZ: 'Aberdeen', CWL: 'Cardiff'
 };
 
-// Form state
+// Form state with localStorage persistence
+function loadState() {
+  const saved = localStorage.getItem('parkingWizardState');
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+}
+
+function saveState() {
+  localStorage.setItem('parkingWizardState', JSON.stringify(state));
+}
+
 const state = {
   airport: null,
   airportName: null,
@@ -19,7 +35,8 @@ const state = {
   parkingToDate: null,
   parkingToTime: null,
   outboundFlight: null,
-  returnFlight: null
+  returnFlight: null,
+  ...loadState()
 };
 
 // Airport lat/lon for GPS
@@ -101,6 +118,10 @@ function checkURLParams() {
 function setupAirportSelection() {
   document.querySelectorAll('.airport-chip, .airport-item').forEach(btn => {
     btn.addEventListener('click', () => handleAirportClick(btn));
+    // Restore selected state
+    if (state.airport && btn.dataset.airport === state.airport) {
+      btn.classList.add('clicked');
+    }
   });
 }
 
@@ -108,8 +129,9 @@ function handleAirportClick(btn) {
   const code = btn.dataset.airport;
   state.airport = code;
   state.airportName = AIRPORT_NAMES[code];
+  saveState();
   document.title = `${state.airportName} Parking`;
-  
+
   btn.classList.add('clicked');
   setTimeout(() => {
     btn.classList.remove('clicked');
@@ -175,6 +197,7 @@ function updateNearestAirports(airports) {
 function renderCalendarFrom() {
   renderCalendar('calendar-from', date => {
     state.parkingFromDate = formatDate(date);
+    saveState();
     goToStep(3);
   });
 }
@@ -183,9 +206,10 @@ function renderCalendarTo() {
   const bar = document.getElementById('return-reminder-bar');
   const dropoffDate = new Date(state.parkingFromDate);
   bar.textContent = `Dropping off: ${formatLongDate(dropoffDate)} at ${state.parkingFromTime}`;
-  
+
   renderCalendar('calendar-to', date => {
     state.parkingToDate = formatDate(date);
+    saveState();
     goToStep(6);
   }, new Date(state.parkingFromDate));
 }
@@ -294,11 +318,13 @@ async function setupOutboundFlightSearch() {
     searchBox.style.display = 'block';
     setupFlightSearch(searchInput, flights, flightList, f => {
       state.outboundFlight = f;
+      saveState();
       goToStep(4);
     });
 
     renderFlightList(flights, flightList, f => {
       state.outboundFlight = f;
+      saveState();
       goToStep(4);
     });
   } catch (err) {
@@ -347,11 +373,13 @@ async function setupReturnFlightSearch() {
     searchBox.style.display = 'block';
     setupFlightSearch(searchInput, flights, flightList, f => {
       state.returnFlight = f;
+      saveState();
       goToStep(7);
     });
 
     renderFlightList(flights, flightList, f => {
       state.returnFlight = f;
+      saveState();
       goToStep(7);
     });
   } catch (err) {
@@ -443,6 +471,7 @@ function setupDropoffTime() {
   
   renderTimeGrid('time-grid-dropoff', time => {
     state.parkingFromTime = time;
+    saveState();
     goToStep(5);
   }, preselected);
 }
@@ -472,6 +501,7 @@ function setupCollectionTime() {
   
   renderTimeGrid('time-grid-collection', time => {
     state.parkingToTime = time;
+    saveState();
     goToStep(8);
   }, preselected);
 }
