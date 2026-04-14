@@ -280,7 +280,7 @@ async function setupOutboundFlightSearch() {
 
   try {
     const dateStr = state.parkingFromDate;
-    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&fullResults=false`;
+    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&fullResults=true`;
     const res = await fetch(url);
     const flights = await res.json();
 
@@ -326,7 +326,7 @@ async function setupReturnFlightSearch() {
   try {
     const dateStr = state.parkingToDate;
     // For return flights: search for flights with destination = origin airport
-    const url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=false`;
+    const url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
     const res = await fetch(url);
     const flights = await res.json();
 
@@ -364,9 +364,14 @@ function setupFlightSearch(input, allFlights, container, onSelect) {
         const code = ((f.flight && f.flight.code) || '').toLowerCase();
         const depIata = ((f.departure && f.departure.airport_iata) || '').toLowerCase();
         const arrIata = ((f.arrival && f.arrival.airport_iata) || '').toLowerCase();
-        const depName = ((f.departure && f.departure.airport_name) || '').toLowerCase();
-        const arrName = ((f.arrival && f.arrival.airport_name) || '').toLowerCase();
-        return code.includes(query) || depIata.includes(query) || arrIata.includes(query) || depName.includes(query) || arrName.includes(query);
+        const depAirport = ((f.departure && f.departure.airport) || '').toLowerCase();
+        const arrAirport = ((f.arrival && f.arrival.airport) || '').toLowerCase();
+        const depCity = ((f.departure && f.departure.city) || '').toLowerCase();
+        const arrCity = ((f.arrival && f.arrival.city) || '').toLowerCase();
+        return code.includes(query) ||
+               depIata.includes(query) || arrIata.includes(query) ||
+               depAirport.includes(query) || arrAirport.includes(query) ||
+               depCity.includes(query) || arrCity.includes(query);
       });
       renderFlightList(filtered, container, onSelect);
     }
