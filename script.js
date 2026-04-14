@@ -280,53 +280,70 @@ function renderCalendarTo() {
 function renderCalendar(containerId, onSelect, minDate = new Date()) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
-  
+
   const today = new Date();
   for (let i = 0; i < 4; i++) {
     const month = new Date(today.getFullYear(), today.getMonth() + i, 1);
-    container.appendChild(createMonthCalendar(month, onSelect, minDate, today));
+    const monthCalendar = createMonthCalendar(month, onSelect, minDate, today);
+    if (monthCalendar) {
+      container.appendChild(monthCalendar);
+    }
   }
 }
 
 function createMonthCalendar(month, onSelect, minDate, today) {
+  // Check if this entire month is before minDate
+  const lastDayOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  if (lastDayOfMonth < minDate) {
+    return null; // Skip this month entirely
+  }
+
   const div = document.createElement('div');
   div.className = 'calendar-month';
-  
+
   const title = document.createElement('div');
   title.className = 'calendar-month-title';
   title.textContent = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   div.appendChild(title);
-  
+
   const grid = document.createElement('div');
   grid.className = 'calendar-grid';
-  
+
   ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].forEach(day => {
     const h = document.createElement('div');
     h.className = 'calendar-day-header';
     h.textContent = day;
     grid.appendChild(h);
   });
-  
+
   const firstDay = new Date(month.getFullYear(), month.getMonth(), 1).getDay();
   const offset = firstDay === 0 ? 6 : firstDay - 1;
-  
-  for (let i = 0; i < offset; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'calendar-day empty';
-    grid.appendChild(empty);
-  }
-  
+
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  let validDaysCount = 0;
+
+  // Count valid days first
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(month.getFullYear(), month.getMonth(), day);
+    const isPast = date < minDate && !isSameDay(date, minDate);
+    if (!isPast) validDaysCount++;
+  }
+
+  // Only add offset if there are valid days
+  if (validDaysCount > 0) {
+    for (let i = 0; i < offset; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'calendar-day empty';
+      grid.appendChild(empty);
+    }
+  }
+
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(month.getFullYear(), month.getMonth(), day);
 
     const isPast = date < minDate && !isSameDay(date, minDate);
     if (isPast) {
-      // Hide past dates instead of showing them disabled
-      const empty = document.createElement('div');
-      empty.className = 'calendar-day empty';
-      grid.appendChild(empty);
-      continue;
+      continue; // Don't add anything for past dates
     }
 
     const btn = document.createElement('button');
@@ -347,7 +364,7 @@ function createMonthCalendar(month, onSelect, minDate, today) {
 
     grid.appendChild(btn);
   }
-  
+
   div.appendChild(grid);
   return div;
 }
