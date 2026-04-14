@@ -339,13 +339,12 @@ function createMonthCalendar(month, onSelect, minDate, today) {
 
     btn.addEventListener('click', () => {
       btn.classList.add('clicked');
-        setTimeout(() => {
-          btn.classList.remove('clicked');
-          onSelect(date);
-        }, 250);
-      });
-    }
-    
+      setTimeout(() => {
+        btn.classList.remove('clicked');
+        onSelect(date);
+      }, 250);
+    });
+
     grid.appendChild(btn);
   }
   
