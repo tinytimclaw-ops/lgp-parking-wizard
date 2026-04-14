@@ -36,6 +36,9 @@ const state = {
   parkingToTime: null,
   outboundFlight: null,
   returnFlight: null,
+  agent: 'WY992',
+  adcode: '',
+  promotionCode: '',
   ...loadState()
 };
 
@@ -118,6 +121,11 @@ function checkURLParams() {
   const params = new URLSearchParams(window.location.search);
   const location = params.get('location') || params.get('Location') || params.get('airport');
 
+  // Capture all marketing params
+  if (params.get('agent')) state.agent = params.get('agent');
+  if (params.get('adcode')) state.adcode = params.get('adcode');
+  if (params.get('promotionCode')) state.promotionCode = params.get('promotionCode');
+
   if (location) {
     const airportCode = location.toUpperCase();
     if (AIRPORT_NAMES[airportCode]) {
@@ -129,6 +137,9 @@ function checkURLParams() {
       return true;
     }
   }
+
+  // Save params even if no location
+  saveState();
   return false;
 }
 
@@ -612,7 +623,7 @@ function renderSummary() {
 function performSearch() {
   const host = window.location.host;
   const isLocal = host.startsWith('127') || host.includes('github.io');
-  const basedomain = isLocal ? 'www.holidayextras.com' : host.replace('www', 'app');
+  const basedomain = isLocal ? 'www.holidayextras.com' : host;
 
   const outDate = state.parkingFromDate;
   const inDate = state.parkingToDate;
@@ -621,7 +632,7 @@ function performSearch() {
 
   const flight = state.outboundFlight ? ((state.outboundFlight.flight && state.outboundFlight.flight.code) || 'default') : 'default';
 
-  const url = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=WY992&ppts=&customer_ref=&lang=en&adults=2&depart=${state.airport}&terminal=&arrive=&flight=${flight}&in=${inDate}&out=${outDate}&park_from=${outTime}&park_to=${inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=&promotionCode=`;
+  const url = `https://${basedomain}/static/?selectProduct=cp&#/categories?agent=${state.agent}&ppts=&customer_ref=&lang=en&adults=2&depart=${state.airport}&terminal=&arrive=&flight=${flight}&in=${inDate}&out=${outDate}&park_from=${outTime}&park_to=${inTime}&filter_meetandgreet=&filter_parkandride=&children=0&infants=0&redirectReferal=carpark&from_categories=true&adcode=${state.adcode}&promotionCode=${state.promotionCode}`;
 
   window.location.href = url;
 }
