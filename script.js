@@ -308,6 +308,12 @@ async function setupOutboundFlightSearch() {
 }
 
 async function setupReturnFlightSearch() {
+  // If no outbound flight selected, skip return flight step automatically
+  if (!state.outboundFlight) {
+    goToStep(7);
+    return;
+  }
+
   const subtitle = document.getElementById('return-subtitle');
   const loading = document.getElementById('flight-loading-return');
   const flightList = document.getElementById('flight-list-return');
@@ -325,16 +331,8 @@ async function setupReturnFlightSearch() {
 
   try {
     const dateStr = state.parkingToDate;
-
-    // For return flights: if we have an outbound flight, get the destination from it
-    // Otherwise just search all flights arriving at origin airport
-    let url;
-    if (state.outboundFlight && state.outboundFlight.arrival && state.outboundFlight.arrival.airport_iata) {
-      const outboundDestination = state.outboundFlight.arrival.airport_iata;
-      url = `${FLIGHT_API}/searchDayFlights?location=${outboundDestination}&departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
-    } else {
-      url = `${FLIGHT_API}/searchDayFlights?departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
-    }
+    const outboundDestination = state.outboundFlight.arrival.airport_iata;
+    const url = `${FLIGHT_API}/searchDayFlights?location=${outboundDestination}&departDate=${dateStr}&destination=${state.airport}&fullResults=true`;
 
     const res = await fetch(url);
     const flights = await res.json();
