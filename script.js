@@ -350,7 +350,7 @@ async function setupOutboundFlightSearch() {
 
   try {
     const dateStr = state.parkingFromDate;
-    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&fullResults=true`;
+    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&noCodeShares=1&fullResults=true`;
     const res = await fetch(url);
     const flights = await res.json();
 
