@@ -266,29 +266,38 @@ async function setupOutboundFlightSearch() {
   const subtitle = document.getElementById('outbound-subtitle');
   const loading = document.getElementById('flight-loading-out');
   const flightList = document.getElementById('flight-list-out');
-  
+  const searchBox = document.getElementById('flight-search-out');
+  const searchInput = document.getElementById('flight-search-input');
+
   const date = new Date(state.parkingFromDate);
   subtitle.textContent = `${state.airportName} → ${formatShortDate(date)}`;
-  
+
   document.getElementById('skip-outbound').onclick = () => goToStep(4);
-  
+
   loading.style.display = 'block';
   flightList.innerHTML = '';
-  
+  searchBox.style.display = 'none';
+
   try {
     const dateStr = state.parkingFromDate;
     const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&departDate=${dateStr}&fullResults=false`;
     const res = await fetch(url);
     const flights = await res.json();
-    
+
     loading.style.display = 'none';
-    
+
     if (flights.length === 0) {
       flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#767d7d;">No flights found</p>';
       return;
     }
-    
-    renderFlightList(flights.slice(0, 50), flightList, f => {
+
+    searchBox.style.display = 'block';
+    setupFlightSearch(searchInput, flights, flightList, f => {
+      state.outboundFlight = f;
+      goToStep(4);
+    });
+
+    renderFlightList(flights, flightList, f => {
       state.outboundFlight = f;
       goToStep(4);
     });
@@ -302,29 +311,38 @@ async function setupReturnFlightSearch() {
   const subtitle = document.getElementById('return-subtitle');
   const loading = document.getElementById('flight-loading-return');
   const flightList = document.getElementById('flight-list-return');
-  
+  const searchBox = document.getElementById('flight-search-return');
+  const searchInput = document.getElementById('flight-search-input-return');
+
   const date = new Date(state.parkingToDate);
   subtitle.textContent = `${formatShortDate(date)} → ${state.airportName}`;
-  
+
   document.getElementById('skip-return').onclick = () => goToStep(7);
-  
+
   loading.style.display = 'block';
   flightList.innerHTML = '';
-  
+  searchBox.style.display = 'none';
+
   try {
     const dateStr = state.parkingToDate;
-    const url = `${FLIGHT_API}/searchDayFlights?arrival=${state.airport}&departDate=${dateStr}&fullResults=false`;
+    const url = `${FLIGHT_API}/searchDayFlights?location=${state.airport}&arrivalDate=${dateStr}&fullResults=false`;
     const res = await fetch(url);
     const flights = await res.json();
-    
+
     loading.style.display = 'none';
-    
+
     if (flights.length === 0) {
       flightList.innerHTML = '<p style="text-align:center;padding:20px;color:#767d7d;">No flights found</p>';
       return;
     }
-    
-    renderFlightList(flights.slice(0, 50), flightList, f => {
+
+    searchBox.style.display = 'block';
+    setupFlightSearch(searchInput, flights, flightList, f => {
+      state.returnFlight = f;
+      goToStep(7);
+    });
+
+    renderFlightList(flights, flightList, f => {
       state.returnFlight = f;
       goToStep(7);
     });
@@ -334,20 +352,38 @@ async function setupReturnFlightSearch() {
   }
 }
 
+function setupFlightSearch(input, allFlights, container, onSelect) {
+  input.value = '';
+  input.addEventListener('input', (e) => {
+    const query = e.target.value.toLowerCase().trim();
+    if (query === '') {
+      renderFlightList(allFlights, container, onSelect);
+    } else {
+      const filtered = allFlights.filter(f => {
+        const code = ((f.flight && f.flight.code) || '').toLowerCase();
+        const depIata = ((f.departure && f.departure.airport_iata) || '').toLowerCase();
+        const arrIata = ((f.arrival && f.arrival.airport_iata) || '').toLowerCase();
+        return code.includes(query) || depIata.includes(query) || arrIata.includes(query);
+      });
+      renderFlightList(filtered, container, onSelect);
+    }
+  });
+}
+
 function renderFlightList(flights, container, onSelect) {
   container.innerHTML = '';
   flights.forEach(f => {
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'flight-item';
-    
+
     const code = (f.flight && f.flight.code) || '';
     const depTime = (f.departure && f.departure.time) || '';
     const arrTime = (f.arrival && f.arrival.time) || '';
     const depIata = (f.departure && f.departure.airport_iata) || '';
     const arrIata = (f.arrival && f.arrival.airport_iata) || '';
     const stops = (f.flight && f.flight.connectingFlights && f.flight.connectingFlights.amount) || 0;
-    
+
     item.innerHTML = `
       <div class="flight-code">${code} <span style="margin-left:auto;">${stops === 0 ? 'Direct' : stops + ' stop' + (stops > 1 ? 's' : '')}</span></div>
       <div class="flight-times">
@@ -356,7 +392,7 @@ function renderFlightList(flights, container, onSelect) {
         <div class="flight-time">${arrTime} <span class="flight-airport">${arrIata}</span></div>
       </div>
     `;
-    
+
     item.addEventListener('click', () => {
       item.classList.add('clicked');
       setTimeout(() => {
@@ -364,7 +400,7 @@ function renderFlightList(flights, container, onSelect) {
         onSelect(f);
       }, 250);
     });
-    
+
     container.appendChild(item);
   });
 }
